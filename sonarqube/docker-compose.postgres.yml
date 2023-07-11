@@ -1,0 +1,38 @@
+version: "3"
+services:
+  postgres:
+    image: postgres:11-alpine
+    environment:
+      POSTGRES_DB: sonar
+      POSTGRES_USER: sonar_rw
+      POSTGRES_PASSWORD: sonar_rw@root
+    restart: unless-stopped
+    volumes:
+      - sonar-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -U sonar_rw -h 127.0.0.1
+      interval: 5s
+  sonarqube:
+    image: seanly/appset:sonarqube-8.9.0-community
+    depends_on:
+      - postgres
+    environment:
+      SONARQUBE_JDBC_URL: jdbc:postgresql://postgres:5432/sonar
+      SONARQUBE_JDBC_USERNAME: sonar_rw
+      SONARQUBE_JDBC_PASSWORD: sonar_rw@root
+    ports:
+      - 9000:9000
+    volumes:
+      - sonar-data:/opt/sonarqube/data
+      - sonar-conf:/opt/sonarqube/conf
+    restart: unless-stopped
+
+networks:
+  default:
+    name: opsbox-network
+    external: true
+
+volumes:
+    sonar-postgres:
+    sonar-data:
+    sonar-conf:

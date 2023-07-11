@@ -1,0 +1,19 @@
+version: "3"
+services:
+  sonarqube:
+    build: 
+      context: .
+    image: seanly/appset:sonarqube-8.9.0-community
+    environment:
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: true
+      discovery.type: single-node
+    ports:
+      - 9000:9000
+    volumes:
+      - sonar-data:/opt/sonarqube/data
+      - sonar-conf:/opt/sonarqube/conf
+    restart: unless-stopped
+
+volumes:
+    sonar-data:
+    sonar-conf:
