@@ -1,0 +1,13 @@
+version: "3"
+
+services:
+  tengine:
+    build: 
+      context: .
+    image: seanly/appset:tengine-2.3.4
+    restart: unless-stopped
+
+networks:
+  default:
+    name: opsbox-network
+    external: true
