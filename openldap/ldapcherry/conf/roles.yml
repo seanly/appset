@@ -1,0 +1,8 @@
+
+admin-lv2:
+    display_name: Administrators Level 2
+    description: Basic administrators of the system
+    LC_admins: True
+    backends_groups:
+        ldap:
+            - cn=ldapadmin,ou=groups,dc=oes,dc=opsbox
