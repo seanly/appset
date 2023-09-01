@@ -29,8 +29,8 @@ services:
     dns:
       - 223.5.5.5
     environment:
-      - ALICLOUD_ACCESS_KEY={{AK}}
-      - ALICLOUD_SECRET_KEY={{SK}}
+      - ALICLOUD_ACCESS_KEY=${AK}
+      - ALICLOUD_SECRET_KEY=${SK}
     ports:
       - "80:80"
       - "443:443"
@@ -81,4 +81,5 @@ services:
     - "traefik.http.routers.sample.rule=Host(`sample.opsbox.dev`)"
     - "traefik.http.routers.sample.tls=true"
     - "traefik.http.routers.sample.tls.certResolver=le"
+    - "traefik.http.services.sample.loadbalancer.server.port=8081"
 ```
