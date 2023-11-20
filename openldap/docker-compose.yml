@@ -18,17 +18,6 @@ services:
       OPENLDAP_CONFIG_PASSWORD: admin!23
       OPENLDAP_LDAPADMIN_PASSWORD: admin!23
 
-  ldapcherry:
-    build:
-      context: ldapcherry
-    image: seanly/appset:ldapcherry
-    restart: unless-stopped
-    ports:
-      - 8080:8080
-    tty: true
-    volumes:
-    - ./ldapcherry/conf:/etc/ldapcherry
-
 networks:
   default:
     name: opsbox-network
