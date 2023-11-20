@@ -21,9 +21,9 @@ services:
     build:
       context: .
       args:
-        KEYCLOAK_VERSION: 14.0.0
+        KEYCLOAK_VERSION: 16.1.0
     container_name: keycloak
-    image: seanly/appset:keycloak-v14.0.0-1
+    image: seanly/appset:keycloak-v16.1.0-1
     restart: unless-stopped
     depends_on:
       - mysql
@@ -34,7 +34,7 @@ services:
     environment:
       PROXY_ADDRESS_FORWARDING: "true"
       KEYCLOAK_USER: admin
-      KEYCLOAK_PASSWORD: admin!23
+      KEYCLOAK_PASSWORD: keycloak
       DB_VENDOR: mysql
       DB_ADDR: mysql
       DB_PORT: 3306
