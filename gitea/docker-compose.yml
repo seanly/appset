@@ -1,0 +1,49 @@
+version: "3"
+
+networks:
+  default:
+    name: opsbox-network
+    external: true
+
+volumes:
+    gitea-postgres:
+    gitea-data:
+
+services:
+  gitea:
+    image: gitea/gitea:1.21.0
+    container_name: gitea
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - GITEA__database__DB_TYPE=postgres
+      - GITEA__database__HOST=gitea-db:5432
+      - GITEA__database__NAME=gitea
+      - GITEA__database__USER=gitea_rw
+      - GITEA__database__PASSWD=gitea_rw@root
+    restart: always
+    volumes:
+      - gitea-data:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "3000:3000"
+      - "2222:22"
+    depends_on:
+      - postgres
+
+  postgres:
+    container_name: gitea-db
+    image: "postgres:15.5-alpine"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nc", "-zv", "localhost", "5432"]
+      interval: 1s
+      timeout: 10s
+    environment:
+      POSTGRES_DB: gitea
+      POSTGRES_USER: gitea_rw
+      POSTGRES_PASSWORD: gitea_rw@root
+      PGPASSWORD: gitea_rw@root
+    volumes:
+      - gitea-postgres:/var/lib/postgresql/data
