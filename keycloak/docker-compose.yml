@@ -2,6 +2,7 @@ version: '3'
 
 services:
   postgres:
+    container_name: keycloak-db
     image: "postgres:15.5-alpine"
     restart: unless-stopped
     healthcheck:
@@ -33,7 +34,7 @@ services:
       - KC_DB=postgres
       - KC_DB_USERNAME=keycloak_rw
       - KC_DB_PASSWORD=keycloak_rw@root
-      - KC_DB_URL=jdbc:postgresql://postgres:5432/keycloak
+      - KC_DB_URL=jdbc:postgresql://keycloak-db:5432/keycloak
       - KC_METRICS_ENABLED=true
       - KC_FEATURES=account2,admin2,account-api,token-exchange,docker,declarative-user-profile
       - KEYCLOAK_ADMIN=admin
