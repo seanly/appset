@@ -111,6 +111,7 @@ ARG gid=1000
 RUN set -eux; \
   yum install -y bzip2 pcre-devel openssl-devel gd-devel \
   && groupadd -g ${gid} ${group} \
+  && useradd -g ${gid} -G ${group} -u ${uid} ${user}\
   && mkdir -p /var/run \
   && mkdir -p /var/log/nginx \
   && mkdir -p /var/cache/nginx/proxy \
