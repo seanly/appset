@@ -1,0 +1,31 @@
+version: '3'
+services:
+
+  mysql:
+    container_name: gogs-db
+    image: seanly/dbextra:mysql-5.7.42
+    restart: always
+    volumes:
+        - gogs-mysql:/var/lib/mysql
+    environment:
+        MYSQL_ROOT_PASSWORD: passw0rd
+        MYSQL_DATABASE: gogs
+        MYSQL_USER: gogs
+        MYSQL_PASSWORD: gogs_passw0rd
+  gogs:
+    container_name: gogs
+    image: gogs/gogs:0.12.3
+    restart: always
+    ports:
+        - "30022:22"
+        - "30300:3000"
+    volumes:
+        - gogs-data:/data
+        - ./:/mnt
+    environment:
+        - "RUN_CROUD=true"
+        - SSH_PORT=30022
+
+volumes:
+    gogs-data:
+    gogs-mysql:
