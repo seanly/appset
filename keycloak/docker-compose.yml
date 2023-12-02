@@ -24,12 +24,14 @@ services:
         KEYCLOAK_VERSION: 22.0.5
     image: seanly/appset:keycloak-v22.0.5-1
     container_name: keycloak
-    command: ["start-dev"]
+    #command: ["start-dev"] # ip:port 
+    command: >-
+      start --proxy=edge 
+      --hostname=9081-seanly-appset-i53a6phr9we.ws-us106.gitpod.io 
+      --hostname-admin=9082-seanly-appset-i53a6phr9we.ws-us106.gitpod.io
     restart: unless-stopped
     depends_on:
       - postgres
-    healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:8080"]
     environment:
       - KC_DB=postgres
       - KC_DB_USERNAME=keycloak_rw
@@ -39,8 +41,14 @@ services:
       - KC_FEATURES=account2,admin2,account-api,token-exchange,docker,declarative-user-profile
       - KEYCLOAK_ADMIN=admin
       - KEYCLOAK_ADMIN_PASSWORD=keycloak
+    labels:
+      - "traefik.http.routers.keycloak.rule=Host(`keycloak.opsbox.dev`,`admin-keycloak.opsbox.dev`)"
+      - "traefik.http.routers.keycloak.tls=true"
+      - "traefik.http.routers.keycloak.tls.certResolver=le"
+      - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
     ports:
-      - 9080:8080
+      - 9081:8080
+      - 9082:8080
 
 networks:
   default:
