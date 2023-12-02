@@ -34,7 +34,7 @@ if [ ! -e "$FIRST_START_DONE" ]; then
 
       /usr/sbin/slapd -h "ldap:/// ldaps:/// ldapi:///" -u ldap -d $DEBUG_LEVEL &
       slapd_pid=$!
-      sleep 3
+      sleep 10
 
       cat ${OPENLDAP_LDIF_DIR}/001-domain.ldif | envsubst > /tmp/domain.ldif
       cat ${OPENLDAP_LDIF_DIR}/002-structure.ldif | envsubst > /tmp/structure.ldif
