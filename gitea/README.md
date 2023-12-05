@@ -2,9 +2,9 @@
 
 ## 使用注意
 
-下面的配置主要是实现当访问 /usr/login 请求时重定向到首页，但是当访问首页时会重定向到 /user/oauth2/sso 单点登录页面，这样就实现了只允许单点登录方式。
+下面的配置主要是实现当访问 `/usr/login` 请求时重定向到首页，但是当访问首页时会重定向到 `/user/oauth2/sso` 单点登录页面，这样就实现了只允许单点登录方式。
 
-如果需要手动登录本地账号需要修改下面的 xxx.replacement=https://gitea.opsbox.dev/user/login，然后手动访问这个地址。
+如果需要手动登录本地账号需要修改下面的 `xxx.replacement=https://gitea.opsbox.dev/user/login`，然后手动访问这个地址。
 
 ```
     environment:
