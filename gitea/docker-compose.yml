@@ -1,14 +1,5 @@
 version: "3"
 
-networks:
-  default:
-    name: opsbox-network
-    external: true
-
-volumes:
-    gitea-postgres:
-    gitea-data:
-
 services:
   gitea:
     image: gitea/gitea:1.21.0
@@ -21,6 +12,24 @@ services:
       - GITEA__database__NAME=gitea
       - GITEA__database__USER=gitea_rw
       - GITEA__database__PASSWD=gitea_rw@root
+      - GITEA__openid__ENABLE_OPENID_SIGNIN=false
+      - GITEA__openid__ENABLE_OPENID_SIGNUP=false
+      - GITEA__server__DISABLE_SSH=true
+      - GITEA__server__DOMAIN=gitea.opsbox.dev
+      - GITEA__server__LANDING_PAGE=/user/oauth2/sso
+      - GITEA__service__DISABLE_REGISTRATION=true
+      - GITEA__service__ENABLE_CAPTCHA=true
+      - GITEA__service__ENABLE_BASIC_AUTHENTICATION=false
+      - GITEA__service__REQUIRE_CAPTCHA_FOR_LOGIN=true
+      - GITEA__service__REQUIRE_EXTERNAL_REGISTRATION_CAPTCHA=true
+      - GITEA__service__ALLOW_ONLY_EXTERNAL_REGISTRATION=true
+      - GITEA__service.explore__REQUIRE_SIGNIN_VIEW=true
+      - GITEA__service.explore__DISABLE_USERS_PAGE=true
+      - GITEA__oauth2_client__ENABLE_AUTO_REGISTRATION=true
+      - GITEA__oauth2_client__USERNAME=username
+      - GITEA__oauth2_client__ACCOUNT_LINKING=auto
+      - GITEA__admin__DISABLE_REGULAR_ORG_CREATION=true
+      - GITEA__security__INSTALL_LOCK=true
     restart: always
     volumes:
       - gitea-data:/data
@@ -31,7 +40,15 @@ services:
       - "2222:22"
     depends_on:
       - postgres
-
+    labels:
+      - "traefik.http.routers.gitea.rule=Host(`gitea.opsbox.dev`)"
+      - "traefik.http.routers.gitea.tls=true"
+      - "traefik.http.routers.gitea.tls.certResolver=le"
+      - "traefik.http.services.gitea.loadbalancer.server.port=3000"
+      - "traefik.http.routers.gitea.middlewares=gitea-login-redirect"
+      - "traefik.http.middlewares.gitea-login-redirect.redirectregex.regex=^https://gitea.opsbox.dev/user/login*"
+      - "traefik.http.middlewares.gitea-login-redirect.redirectregex.replacement=https://gitea.opsbox.dev/"
+      
   postgres:
     container_name: gitea-db
     image: "postgres:15.5-alpine"
@@ -47,3 +64,12 @@ services:
       PGPASSWORD: gitea_rw@root
     volumes:
       - gitea-postgres:/var/lib/postgresql/data
+
+networks:
+  default:
+    name: opsbox-network
+    external: true
+
+volumes:
+    gitea-postgres:
+    gitea-data:
