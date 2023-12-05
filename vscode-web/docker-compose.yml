@@ -1,0 +1,15 @@
+version: "3"
+
+services:
+  vscode-web:
+    image: codercom/code-server
+    restart: unless-stopped
+    ports:
+      - 8080:8080
+    volumes:
+      - ./data:/home/coder/.local/share/code-server:rw
+
+networks:
+  default:
+    name: opsbox-network
+    external: true
