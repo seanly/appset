@@ -1,0 +1,21 @@
+version: "3"
+
+services:
+  theia-ide:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: seanly/appset:theia-ide
+    restart: unless-stopped
+    ports:
+      - 3000:3000
+    volumes:
+      - theia-ide-data:/home/project:cached
+
+volumes:
+  theia-ide-data:
+
+networks:
+  default:
+    name: opsbox-network
+    external: true
