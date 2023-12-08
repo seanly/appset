@@ -12,7 +12,7 @@ RUN set -eux; \
     curl -sLfO https://github.com/vozlt/nginx-module-vts/archive/refs/tags/v0.2.2.tar.gz && \
     curl -sLfO https://github.com/vision5/ngx_devel_kit/archive/refs/tags/v0.3.2.tar.gz && \
     curl -sLfO https://github.com/calio/form-input-nginx-module/archive/refs/tags/v0.12.tar.gz && \
-    curl -sLfO https://github.com/alibaba/tengine/archive/refs/tags/2.3.4.tar.gz
+    curl -sLfO https://github.com/alibaba/tengine/archive/refs/tags/2.4.1.tar.gz
 
 RUN set -eux; \
   mkdir -p /pkg \
@@ -38,7 +38,7 @@ RUN set -eux; \
     mkdir -p /usr/local/nginx/var/uwsgi;  \
     mkdir -p /var/log/nginx;  \
     mkdir -p /var/cache/nginx; \
-    cd /pkg/tengine-2.3.4; \
+    cd /pkg/tengine-2.4.1; \
     ./configure --prefix=/usr/local/nginx \
       --pid-path=/var/run/nginx.pid \
       --error-log-path=/var/log/nginx/error.log \
@@ -134,5 +134,7 @@ RUN ln -sf /dev/stdout /var/log/nginx/access.log \
 STOPSIGNAL SIGTERM
 
 ENV PATH /usr/local/nginx/sbin:$PATH
+
+COPY ./nginx.conf /usr/local/nginx/conf/nginx.conf
 
 ENTRYPOINT ["nginx", "-g", "daemon off;"]
