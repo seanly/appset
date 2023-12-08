@@ -1,7 +1,8 @@
 version: '3'
 
 services:
-  database:
+  postgres:
+    container_name: codimd-db
     image: postgres:11.6-alpine
     environment:
       - POSTGRES_USER=codimd
@@ -16,7 +17,7 @@ services:
     image: seanly/appset:codimd
     container_name: codimd
     environment:
-      - CMD_DB_URL=postgres://codimd:codimd2022@database/codimd
+      - CMD_DB_URL=postgres://codimd:codimd2022@codimd-db/codimd
       - CMD_USECDN=false
       - CMD_ALLOW_GRAVATAR=false
       - CMD_ALLOW_ANONYMOUS=false
@@ -37,9 +38,6 @@ services:
       - "traefik.http.routers.codimd.tls=true"
       - "traefik.http.routers.codimd.tls.certResolver=le"
       - "traefik.http.services.codimd.loadbalancer.server.port=3000"
-      - "traefik.http.routers.codimd.middlewares=codimd-login-redirect"
-      - "traefik.http.middlewares.codimd-login-redirect.redirectregex.regex=^https://codimd.opsbox.dev/login*"
-      - "traefik.http.middlewares.codimd-login-redirect.redirectregex.replacement=https://codimd.opsbox.dev/auth/oauth2"
       
 networks:
   default:
