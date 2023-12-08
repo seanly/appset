@@ -19,10 +19,16 @@ services:
       - CMD_DB_URL=postgres://codimd:codimd2022@database/codimd
       - CMD_USECDN=false
       - CMD_ALLOW_GRAVATAR=false
+      - CMD_ALLOW_ANONYMOUS=false
+      - CMD_ALLOW_ANONYMOUS_EDITS=false
+      - CMD_ALLOW_FREEURL=false
+      - CMD_ALLOW_PDF_EXPORT=false
+      - CMD_LINKIFY_HEADER_STYLE=gfm
+      - CMD_IMAGE_UPLOAD_TYPE=filesystem
+      - CMD_EMAIL=true
+      - CMD_ALLOW_EMAIL_REGISTER=false
     depends_on:
       - database
-    ports:
-      - "3000:3000"
     volumes:
       - codimd-data:/home/hackmd/app/public/uploads
     restart: always
@@ -30,7 +36,11 @@ services:
       - "traefik.http.routers.codimd.rule=Host(`codimd.example.dev`)"
       - "traefik.http.routers.codimd.tls=true"
       - "traefik.http.routers.codimd.tls.certResolver=le"
-
+      - "traefik.http.services.codimd.loadbalancer.server.port=3000"
+      - "traefik.http.routers.codimd.middlewares=codimd-login-redirect"
+      - "traefik.http.middlewares.codimd-login-redirect.redirectregex.regex=^https://codimd.opsbox.dev/login*"
+      - "traefik.http.middlewares.codimd-login-redirect.redirectregex.replacement=https://codimd.opsbox.dev/auth/oauth2"
+      
 networks:
   default:
     name: opsbox-network
