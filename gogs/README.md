@@ -8,9 +8,7 @@ docker-compose exec gogs bash
 USER=git ./gogs backup
 ```
 
-
 ## restore
-
 
 ```
 docker-compose exec gogs bash 

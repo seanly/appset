@@ -48,4 +48,3 @@
 5. 限制组织的创建，组织需要由管理人员负责创建。
 
 - GITEA__admin__DISABLE_REGULAR_ORG_CREATION=true
-
