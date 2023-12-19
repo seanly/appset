@@ -18,10 +18,17 @@ RUN set -eux; \
   mkdir -p /pkg \
   && ls /tmp/pkg/*.tar.gz | xargs -I {} tar -xzf {}  -C /pkg
 
-FROM centos:7 as build
+FROM ubuntu:22.04 as build
 
-RUN yum install -y git vim gcc gcc-c++ bzip2 make autoconf perl \
-       pcre pcre-devel openssl openssl-devel  gd-devel
+RUN \
+  set -xe && \
+  echo 'APT::Install-Recommends "false";' \
+    > /etc/apt/apt.conf.d/11autoremove-recommends && \
+  echo 'APT::Install-Suggests "false";' \
+    > /etc/apt/apt.conf.d/11autoremove-suggests && \
+  apt update && \
+  apt install -y git vim gcc bzip2 make autoconf perl \
+       libpcre3 libpcre3-dev openssl libssl-dev zlib1g-dev libgd-dev
 
 COPY --from=pkg /pkg /pkg
 
@@ -80,24 +87,64 @@ RUN set -eux; \
       --add-module=/pkg/form-input-nginx-module-0.12 \
     && make -j 4 && make install
 
-FROM centos:7
 
-# Add locales
-RUN set -o errexit -o nounset \
-  && echo 'LANG=en_GB.UTF-8' > /etc/locale.conf \
-  && echo 'LC_ALL=en_GB.UTF-8' >> /etc/locale.conf \
-  && echo 'LANGUAGE=en_GB:en' >> /etc/locale.conf \
-  && /bin/cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+FROM alpine:3.17 as s6-overlay
+
+# install packages
+RUN \
+  apk add --no-cache \
+    bash \
+    curl \
+    xz && mkdir -p /root-out
+
+# set version for s6 overlay
+ARG S6_OVERLAY_VERSION="3.1.5.0"
+ARG S6_OVERLAY_ARCH="x86_64"
+
+# add s6 overlay
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp
+RUN tar -C /root-out -Jxpf /tmp/s6-overlay-noarch.tar.xz
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-${S6_OVERLAY_ARCH}.tar.xz /tmp
+RUN tar -C /root-out -Jxpf /tmp/s6-overlay-${S6_OVERLAY_ARCH}.tar.xz
+
+# add s6 optional symlinks
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-symlinks-noarch.tar.xz /tmp
+RUN tar -C /root-out -Jxpf /tmp/s6-overlay-symlinks-noarch.tar.xz
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-symlinks-arch.tar.xz /tmp
+RUN tar -C /root-out -Jxpf /tmp/s6-overlay-symlinks-arch.tar.xz
+
+FROM ubuntu:22.04
+
+COPY --from=s6-overlay /root-out/ /
+
+RUN \
+  set -xe && \
+  apt update && \
+  apt install -y locales apt-utils \
+    cron curl gnupg netcat net-tools vim inetutils-ping \
+    telnet unzip zip python-pip jq \
+    strace lsof htop tcpdump net-tools iptraf sysstat git vim \
+    bind9-utils iproute2 && \
+  locale-gen zh_CN.utf8 && \
+  locale-gen en_GB.UTF-8 && \
+  echo "**** cleanup ****" && \
+  apt-get autoremove && \
+  apt-get clean && \
+  rm -rf \
+    /tmp/* \
+    /var/lib/apt/lists/* \
+    /var/tmp/* \
+    /var/log/*
 
 ENV LANG=en_GB.UTF-8
 ENV LANGUAGE=en_GB.UTF-8
 ENV LC_ALL=en_GB.UTF-8
 ENV TZ=Asia/Chongqing
 
-RUN sed -i '/^override_install_langs=/d' /etc/yum.conf \
-  && yum install -y epel-release && yum makecache \
-  && yum install -y telnet unzip zip python-pip jq \
-       strace lsof htop tcpdump net-tools bind-utils iptraf iproute sysstat git vim
+ENV HOME="/root" \
+  TERM="xterm" \
+  S6_CMD_WAIT_FOR_SERVICES_MAXTIME="0" \
+  S6_VERBOSITY=1
 
 COPY --from=build /usr/local/nginx /usr/local/nginx
 COPY --from=build /usr/local/lib /usr/local/lib
@@ -108,8 +155,11 @@ ARG group=www
 ARG uid=1000
 ARG gid=1000
 
-RUN set -eux; \
-  yum install -y bzip2 pcre-devel openssl-devel gd-devel \
+RUN \
+  set -xe && \
+  apt update && \
+  apt install -y git vim bzip2 \
+       libpcre3 libpcre3-dev openssl libssl-dev zlib1g-dev \
   && groupadd -g ${gid} ${group} \
   && useradd -g ${gid} -G ${group} -u ${uid} ${user}\
   && mkdir -p /var/run \
@@ -137,4 +187,7 @@ ENV PATH /usr/local/nginx/sbin:$PATH
 
 COPY ./nginx.conf /usr/local/nginx/conf/nginx.conf
 
-ENTRYPOINT ["nginx", "-g", "daemon off;"]
+# add local files
+COPY rootfs /
+
+ENTRYPOINT ["/init"]
