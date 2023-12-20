@@ -4,7 +4,7 @@ services:
   tengine:
     build: 
       context: .
-    image: seanly/appset:tengine-2.4.1
+    image: seanly/appset:tengine-2.4.1-certbot
     restart: unless-stopped
 
 networks:

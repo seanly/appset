@@ -18,14 +18,10 @@ RUN set -eux; \
   mkdir -p /pkg \
   && ls /tmp/pkg/*.tar.gz | xargs -I {} tar -xzf {}  -C /pkg
 
-FROM ubuntu:22.04 as build
+FROM seanly/toolset:brew as build
 
 RUN \
   set -xe && \
-  echo 'APT::Install-Recommends "false";' \
-    > /etc/apt/apt.conf.d/11autoremove-recommends && \
-  echo 'APT::Install-Suggests "false";' \
-    > /etc/apt/apt.conf.d/11autoremove-suggests && \
   apt update && \
   apt install -y git vim gcc bzip2 make autoconf perl \
        libpcre3 libpcre3-dev openssl libssl-dev zlib1g-dev libgd-dev
@@ -87,81 +83,17 @@ RUN set -eux; \
       --add-module=/pkg/form-input-nginx-module-0.12 \
     && make -j 4 && make install
 
-
-FROM alpine:3.17 as s6-overlay
-
-# install packages
-RUN \
-  apk add --no-cache \
-    bash \
-    curl \
-    xz && mkdir -p /root-out
-
-# set version for s6 overlay
-ARG S6_OVERLAY_VERSION="3.1.5.0"
-ARG S6_OVERLAY_ARCH="x86_64"
-
-# add s6 overlay
-ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp
-RUN tar -C /root-out -Jxpf /tmp/s6-overlay-noarch.tar.xz
-ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-${S6_OVERLAY_ARCH}.tar.xz /tmp
-RUN tar -C /root-out -Jxpf /tmp/s6-overlay-${S6_OVERLAY_ARCH}.tar.xz
-
-# add s6 optional symlinks
-ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-symlinks-noarch.tar.xz /tmp
-RUN tar -C /root-out -Jxpf /tmp/s6-overlay-symlinks-noarch.tar.xz
-ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-symlinks-arch.tar.xz /tmp
-RUN tar -C /root-out -Jxpf /tmp/s6-overlay-symlinks-arch.tar.xz
-
-FROM ubuntu:22.04
-
-COPY --from=s6-overlay /root-out/ /
-
-RUN \
-  set -xe && \
-  apt update && \
-  apt install -y locales apt-utils \
-    cron curl gnupg netcat net-tools vim inetutils-ping \
-    telnet unzip zip python-pip jq \
-    strace lsof htop tcpdump net-tools iptraf sysstat git vim \
-    bind9-utils iproute2 && \
-  locale-gen zh_CN.utf8 && \
-  locale-gen en_GB.UTF-8 && \
-  echo "**** cleanup ****" && \
-  apt-get autoremove && \
-  apt-get clean && \
-  rm -rf \
-    /tmp/* \
-    /var/lib/apt/lists/* \
-    /var/tmp/* \
-    /var/log/*
-
-ENV LANG=en_GB.UTF-8
-ENV LANGUAGE=en_GB.UTF-8
-ENV LC_ALL=en_GB.UTF-8
-ENV TZ=Asia/Chongqing
-
-ENV HOME="/root" \
-  TERM="xterm" \
-  S6_CMD_WAIT_FOR_SERVICES_MAXTIME="0" \
-  S6_VERBOSITY=1
+FROM seanly/toolset:s6-overlay
 
 COPY --from=build /usr/local/nginx /usr/local/nginx
 COPY --from=build /usr/local/lib /usr/local/lib
 COPY --from=build /usr/local/include /usr/local/include
 
-ARG user=www
-ARG group=www
-ARG uid=1000
-ARG gid=1000
-
 RUN \
   set -xe && \
   apt update && \
   apt install -y git vim bzip2 \
-       libpcre3 libpcre3-dev openssl libssl-dev zlib1g-dev \
-  && groupadd -g ${gid} ${group} \
-  && useradd -g ${gid} -G ${group} -u ${uid} ${user}\
+       libpcre3 libpcre3-dev openssl libssl-dev zlib1g-dev jq python3 python3-pip python3.10-venv \
   && mkdir -p /var/run \
   && mkdir -p /var/log/nginx \
   && mkdir -p /var/cache/nginx/proxy \
@@ -172,6 +104,22 @@ RUN \
   && chown -R ${uid}:${gid} /var/cache/nginx \
   && chown -R ${uid}:${gid} /var/log/nginx \
   && chown -R ${uid}:${gid} /usr/local/nginx 
+
+RUN \
+  echo "**** install certbot plugins ****" && \
+  CERTBOT_VERSION=$(curl -sL  https://pypi.python.org/pypi/certbot/json |jq -r '. | .info.version') && \
+  python3 -m venv /lsiopy && \
+  pip install -U --no-cache-dir \
+    pip \
+    wheel && \
+  pip install -U --no-cache-dir --find-links https://wheel-index.linuxserver.io/alpine-3.18/ \
+    certbot==${CERTBOT_VERSION} \
+    certbot-dns-aliyun \
+    certbot-dns-dnspod \
+    cryptography \
+    future \
+    zope \
+    requests
 
 WORKDIR /usr/local/nginx
 
