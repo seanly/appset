@@ -5,8 +5,6 @@
 
 # Display variables for troubleshooting
 echo -e "Variables set:\\n\
-PUID=${PUID}\\n\
-PGID=${PGID}\\n\
 TZ=${TZ}\\n\
 URL=${URL}\\n\
 SUBDOMAINS=${SUBDOMAINS}\\n\
@@ -27,7 +25,7 @@ for i in "${SANED_VARS[@]}"; do
 done
 
 # check to make sure DNSPLUGIN is selected if dns validation is used
-CERTBOT_DNS_AUTHENTICATORS=$(certbot plugins --authenticators 2>/dev/null | sed -e 's/^Entry point: EntryPoint(name='\''cpanel'\''/Entry point: EntryPoint(name='\''dns-cpanel'\''/' -e '/EntryPoint(name='\''dns-/!d' -e 's/^Entry point: EntryPoint(name='\''dns-\([^ ]*\)'\'',/\1/' | sort)
+CERTBOT_DNS_AUTHENTICATORS=$(certbot plugins --authenticators 2>/dev/null | sed -e '/EntryPoint(name='\''dns-/!d' -e 's/^Entry point: EntryPoint(name='\''dns-\([^ ]*\)'\'',/\1/' | sort)
 if [[ "${VALIDATION}" = "dns" ]] && ! echo "${CERTBOT_DNS_AUTHENTICATORS}" | grep -q "${DNSPLUGIN}"; then
     echo "Please set the DNSPLUGIN variable to one of the following:"
     echo "${CERTBOT_DNS_AUTHENTICATORS}"
@@ -253,25 +251,13 @@ if [[ "${VALIDATION}" = "dns" ]]; then
     if [[ -n "${PROPAGATION}" ]]; then set_ini_value "dns-${DNSPLUGIN}-propagation-seconds" "${PROPAGATION}" /config/etc/letsencrypt/cli.ini; fi
 
     # plugins that don't support setting credentials file
-    if [[ "${DNSPLUGIN}" =~ ^(route53|standalone)$ ]]; then
+    if [[ "${DNSPLUGIN}" =~ ^(standalone)$ ]]; then
         sed -i "/^dns-${DNSPLUGIN}-credentials\b/d" /config/etc/letsencrypt/cli.ini
     fi
     # plugins that don't support setting propagation
-    if [[ "${DNSPLUGIN}" =~ ^(azure|gandi|route53|standalone)$ ]]; then
+    if [[ "${DNSPLUGIN}" =~ ^(standalone)$ ]]; then
         if [[ -n "${PROPAGATION}" ]]; then echo "${DNSPLUGIN} dns plugin does not support setting propagation time"; fi
         sed -i "/^dns-${DNSPLUGIN}-propagation-seconds\b/d" /config/etc/letsencrypt/cli.ini
-    fi
-    # plugins that use old parameter naming convention
-    if [[ "${DNSPLUGIN}" =~ ^(cpanel)$ ]]; then
-        sed -i "/^dns-${DNSPLUGIN}-credentials\b/d" /config/etc/letsencrypt/cli.ini
-        sed -i "/^dns-${DNSPLUGIN}-propagation-seconds\b/d" /config/etc/letsencrypt/cli.ini
-        set_ini_value "authenticator" "${DNSPLUGIN}" /config/etc/letsencrypt/cli.ini
-        set_ini_value "${DNSPLUGIN}-credentials" "${DNSCREDENTIALFILE}" /config/etc/letsencrypt/cli.ini
-        if [[ -n "${PROPAGATION}" ]]; then set_ini_value "${DNSPLUGIN}-propagation-seconds" "${PROPAGATION}" /config/etc/letsencrypt/cli.ini; fi
-    fi
-    # don't restore txt records when using DuckDNS plugin
-    if [[ "${DNSPLUGIN}" =~ ^(duckdns)$ ]]; then
-        set_ini_value "dns-${DNSPLUGIN}-no-txt-restore" "true" /config/etc/letsencrypt/cli.ini
     fi
 
     echo "${VALIDATION} validation via ${DNSPLUGIN} plugin is selected"
