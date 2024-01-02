@@ -1,0 +1,27 @@
+version: '3'
+services:
+  gitlab-ce:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - VERSION=16.7.0-ce.0
+    container_name: gitlab-ce
+    restart: always
+    image: seanly/appset:gitlab-ce-16.7.0-ce.0
+    ports:
+    - "30022:22"
+    - "8080:80"
+    environment:
+      TZ: 'Asia/Shanghai'
+    volumes:
+    - ./config:/etc/gitlab
+    - gitlab-data:/var/opt/gitlab
+
+volumes:
+    gitlab-data:
+
+networks:
+  default:
+    name: opsbox-network
+    external: true
