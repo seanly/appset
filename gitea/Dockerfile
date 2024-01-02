@@ -1,0 +1,2 @@
+ARG VERSION=1.21.3
+FROM gitea/gitea:${VERSION}
