@@ -1,9 +1,9 @@
-FROM registry:2.8.1
+FROM registry:2.8.3
 
 LABEL cloud.opsbox.authors="seanly" \
       cloud.opsbox.email="seanly@opsbox.dev" \
       cloud.opsbox.name="registry" \
-      cloud.opsbox.version="2.8.1"
+      cloud.opsbox.version="2.8.3"
 
 RUN apk update && \
     apk add --no-cache neovim busybox-extras bash tzdata && \

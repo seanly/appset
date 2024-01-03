@@ -3,7 +3,7 @@ services:
   registry:
     build: 
       context: ./
-    image: seanly/appset:registry-2.8.1
+    image: seanly/appset:registry-2.8.3
     container_name: registry
     restart: unless-stopped
     ports:
