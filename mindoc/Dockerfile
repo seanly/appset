@@ -7,11 +7,16 @@ ENV CGO_ENABLED=0
 RUN git clone -b next https://github.com/seanly/mindoc /code
 WORKDIR /code
 
-RUN go env && \
+
+RUN set -eux \
+    ; OS="$(uname | tr '[:upper:]' '[:lower:]')" \
+    ; ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/')" \
+    ; GOARCH=${ARCH} \
+    ; go env && \
     go mod tidy -v && \
-    go build -v -o mindoc_linux_amd64 -ldflags "-w -s -X 'main.VERSION=$TAG' -X 'main.BUILD_TIME=`date`' -X 'main.GO_VERSION=`go version`'" && \
+    go build -v -o mindoc -ldflags "-w -s -X 'main.VERSION=$TAG' -X 'main.BUILD_TIME=`date`' -X 'main.GO_VERSION=`go version`'" && \
     mkdir -p dist/__default_assets__; \
-    cp -r mindoc_linux_amd64 dist/;\
+    cp -r mindoc dist/;\
     cp -r start.sh dist/;\
     cp -r LICENSE.md dist/;\
     cp -r lib dist/;\
@@ -21,9 +26,9 @@ RUN go env && \
     cp -r views dist/__default_assets__/;\
     cp -r uploads dist/__default_assets__/
 
-RUN ./mindoc_linux_amd64 version
+RUN ./mindoc version
 
-FROM ubuntu:focal
+FROM ubuntu:22.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -46,8 +51,11 @@ ENV LANG=zh_CN.UTF-8
 ENV LANGUAGE=zh_CN:en
 ENV LC_ALL=zh_CN.UTF-8
 
-ENV CALIBRE_URL=https://download.calibre-ebook.com/5.44.0/calibre-5.44.0-x86_64.txz
-RUN mkdir -p /opt/calibre && curl -sLf ${CALIBRE_URL} | tar -xJof - -C /opt/calibre 
+RUN set -eux \
+    ; OS="$(uname | tr '[:upper:]' '[:lower:]')" \
+    ; ARCH="$(uname -m | sed -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/')" \
+    ; CALIBRE_URL=https://download.calibre-ebook.com/7.2.0/calibre-7.2.0-${ARCH}.txz \
+    ;mkdir -p /opt/calibre && curl -sLf ${CALIBRE_URL} | tar -xJof - -C /opt/calibre 
 
 ENV PATH=$PATH:/opt/calibre
 ENV QTWEBENGINE_CHROMIUM_FLAGS="--no-sandbox"
@@ -59,6 +67,7 @@ EXPOSE 8181/tcp
 WORKDIR /mindoc
 
 COPY --from=build /code/dist/ /mindoc/
+COPY ./start.sh /mindoc/start.sh
 
 ENV ZONEINFO=/mindoc/lib/time/zoneinfo.zip
 RUN chmod +x /mindoc/start.sh;\

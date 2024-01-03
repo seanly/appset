@@ -1,8 +1,7 @@
 version: '3'
 
 services:
-  postgres:
-    container_name: codimd-db
+  codimd-postgres:
     image: postgres:11.6-alpine
     environment:
       - POSTGRES_USER=codimd
@@ -17,7 +16,7 @@ services:
     image: seanly/appset:codimd
     container_name: codimd
     environment:
-      - CMD_DB_URL=postgres://codimd:codimd2022@codimd-db/codimd
+      - CMD_DB_URL=postgres://codimd:codimd2022@codimd-postgres/codimd
       - CMD_USECDN=false
       - CMD_ALLOW_GRAVATAR=false
       - CMD_ALLOW_ANONYMOUS=false
@@ -29,7 +28,7 @@ services:
       - CMD_EMAIL=true
       - CMD_ALLOW_EMAIL_REGISTER=false
     depends_on:
-      - database
+      - codimd-postgres
     volumes:
       - codimd-data:/home/hackmd/app/public/uploads
     restart: always

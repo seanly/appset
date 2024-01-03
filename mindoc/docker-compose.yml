@@ -10,7 +10,7 @@ services:
       TZ: Asia/Shanghai
       MINDOC_RUN_MODE: prod
       MINDOC_DB_ADAPTER: mysql
-      MINDOC_DB_HOST: mysql
+      MINDOC_DB_HOST: mindoc-db
       MINDOC_DB_PORT: 3306
       MINDOC_DB_DATABASE: mindoc_next
       MINDOC_DB_USERNAME: mindoc_rw
@@ -32,7 +32,8 @@ services:
     restart: always
 
   mysql:
-    image: seanly/dbextra:mysql-5.7.35
+    container_name: mindoc-db
+    image: mysql:8.0.35-oracle
     restart: always
     volumes:
       - mindoc-database:/var/lib/mysql

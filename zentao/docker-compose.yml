@@ -1,0 +1,65 @@
+version: "3"
+
+services:
+
+  zentao-mysql:
+    image: mysql:8.0.35-oracle
+    restart: always
+    volumes:
+      - zentao-mysql:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "zentao_rw@root"
+      MYSQL_USER: 'zentao_rw'
+      MYSQL_PASSWORD: 'zentao_rw@zentao_ce'
+      MYSQL_DATABASE:  'zentao_ce'
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_general_ci
+    healthcheck:
+      test: mysql --user=root --password=$$MYSQL_ROOT_PASSWORD -e "SHOW DATABASES;"
+      interval: 3s
+      timeout: 1s
+      retries: 5
+
+  zentao:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: seanly/appset:zentao-18.9
+    restart: unless-stopped
+    environment:
+      - MYSQL_INTERNAL=false
+      - ZT_MYSQL_HOST=zentao-mysql
+      - ZT_MYSQL_PORT=3306
+      - ZT_MYSQL_USER=root
+      - ZT_MYSQL_PASSWORD=zentao_rw@root
+      - ZT_MYSQL_DB=zentao_ce
+      - PHP_MAX_EXECUTION_TIME=120
+      - PHP_MEMORY_LIMIT=512M
+      - PHP_POST_MAX_SIZE=128M
+      - PHP_UPLOAD_MAX_FILESIZE=128M
+      - LDAP_ENABLED=true
+      - SMTP_ENABLED=false
+      - APP_DEFAULT_PORT=443
+      - APP_DOMAIN=443-seanly-appset-p7xk4i71ap3.ws-us107.gitpod.io
+      - PROTOCOL_TYPE=https
+      - IS_CONTAINER=true
+      - LINK_GIT=false
+      - LINK_CI=false
+    ports:
+    - 443:443
+    - 33006:3306
+    volumes:
+      - zentao-data:/data
+    depends_on:
+      - zentao-mysql
+
+
+volumes:
+  zentao-mysql:
+  zentao-data:
+
+networks:
+  default:
+    name: opsbox-network
+    external: true
