@@ -4,7 +4,7 @@ services:
   flare:
     build: 
       context: ./
-    image: seanly/appset:flare-0.4.3
+    image: seanly/appset:flare
     restart: always
     # 默认无需添加任何参数，如有特殊需求
     # 可阅读文档 https://github.com/soulteary/docker-flare/blob/main/docs/advanced-startup.md
