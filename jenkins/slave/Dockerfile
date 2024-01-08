@@ -1,6 +1,6 @@
 # vim: set ft=dockerfile:
 
-FROM docker:24.0.7-dind-alpine3.18
+FROM docker:24.0.7-dind-alpine3.19
 
 LABEL name="jenkins slave" \
       vender="opsbox.dev"
@@ -30,8 +30,8 @@ ARG SWARM_VERSION=3.39
 
 RUN set -eux \
   && apk update \
-  && apk add iptables xz pigz curl ca-certificates bash  \
-    openssh git subversion rsync bzip2 sudo \
+  && apk add iptables xz pigz curl ca-certificates bash \
+    git subversion rsync bzip2 sudo \
     net-tools procps-ng mtr iproute2 \
     openjdk11 supervisor cronie \
   && mkdir -p /usr/share/jenkins \

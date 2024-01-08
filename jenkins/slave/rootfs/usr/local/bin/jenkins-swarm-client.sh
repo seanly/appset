@@ -25,7 +25,7 @@ fi
 if [ -n "$EXECUTORS" ]; then
   APP_OPTS="-executors ${EXECUTORS} ${APP_OPTS}"
 else
-  APP_OPTS="-executors 2 ${APP_OPTS}"
+  APP_OPTS="-executors 1 ${APP_OPTS}"
 fi
 
 AGENT_NAME="-name ${HOSTNAME}"
